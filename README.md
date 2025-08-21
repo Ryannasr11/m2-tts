@@ -1,6 +1,6 @@
-# M2 TTS Model - Lightweight Text-to-Speech for Apple Silicon
+# M2 TTS Model - Lightweight Text-to-Speech
 
-A lightweight, CPU-optimized text-to-speech model designed specifically for Apple M2 MacBook Pro, inspired by KittenTTS architecture.
+A lightweight, CPU-optimized text-to-speech model designed specifically to be trainable on an Apple M2 MacBook Pro, inspired by KittenTTS architecture.
 
 ## Project Overview
 
@@ -17,20 +17,6 @@ This project implements a minimalist TTS model with the following characteristic
 - **Duration Predictor**: Convolutional network for phoneme timing
 - **VAE Decoder**: Variational autoencoder for mel-spectrogram generation
 - **Vocoder**: Simplified HiFi-GAN for waveform synthesis
-
-## Development Status
-
-### Sprint 1: Foundation & POC (Current)
-- [x] Repository setup and structure
-- [ ] Development environment configuration
-- [ ] Minimal model implementation (64 hidden dims)
-- [ ] Basic training loop with MPS support
-- [ ] End-to-end pipeline validation
-
-### Upcoming Sprints
-- **Sprint 2**: Quality improvement and full LJSpeech training
-- **Sprint 3**: Multi-speaker support with VCTK subset
-- **Sprint 4**: Model optimization and deployment
 
 ## Quick Start
 
@@ -54,11 +40,6 @@ python scripts/synthesize.py --text "Hello world" --checkpoint outputs/stage1_mo
 - M2 MacBook Pro 14" (M2 Pro, 16GB RAM)
 - 50GB available storage
 - macOS 13.0+ with MPS support
-
-### Recommended Configuration  
-- M2 MacBook Pro 14" (M2 Max, 32GB+ RAM)
-- 100GB available storage + external SSD
-- Thermal monitoring for extended training
 
 ## Performance Expectations
 
