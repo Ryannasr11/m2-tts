@@ -1,0 +1,97 @@
+# Stage 1 POC Configuration - Minimal model for M2 MacBook
+# Target: Proof of concept with basic audio generation
+
+model:
+  # Minimal architecture for initial testing
+  text_encoder:
+    vocab_size: 256
+    hidden_dim: 64          # Very small for POC
+    num_layers: 2           # Minimal depth
+    num_heads: 2
+    dropout: 0.1
+    
+  duration_predictor:
+    hidden_dim: 64
+    kernel_size: 3
+    dropout: 0.1
+    
+  decoder:
+    hidden_dim: 64
+    latent_dim: 64
+    mel_channels: 64        # Reduced mel dimensions
+    
+  vocoder:
+    mel_channels: 64
+    hidden_channels: 128    # Small vocoder
+    kernel_size: 3
+    n_layers: 4
+
+training:
+  # Memory-constrained settings
+  batch_size: 2             # Very small batch size
+  gradient_accumulation_steps: 16  # Effective batch size = 32
+  max_steps: 10000          # Short training for POC
+  learning_rate: 1e-4
+  weight_decay: 1e-6
+  
+  # Optimization settings
+  mixed_precision: true
+  gradient_checkpointing: true
+  gradient_clip_norm: 5.0
+  
+  # Scheduling
+  warmup_steps: 1000
+  lr_scheduler: "cosine"
+  
+  # Loss weights
+  mel_loss_weight: 1.0
+  duration_loss_weight: 0.1
+  
+  # Checkpointing
+  save_every: 1000
+  validate_every: 500
+  max_checkpoints: 5
+
+data:
+  # Use small subset for POC
+  dataset_name: "ljspeech"
+  data_dir: "data/ljspeech"
+  subset_size: 100          # Only 100 samples for POC
+  
+  # Audio preprocessing
+  sample_rate: 22050        # Reduced from 24kHz
+  n_fft: 1024
+  hop_length: 256
+  win_length: 1024
+  n_mels: 64                # Reduced mel dimensions
+  fmin: 0
+  fmax: 11025               # sample_rate // 2
+  
+  # Text preprocessing
+  text_cleaners: ["english_cleaners"]
+  phoneme_dict: "configs/phoneme_dict.txt"
+  
+  # Data loading
+  num_workers: 2            # Reduced for M2
+  pin_memory: false         # Not needed with unified memory
+  prefetch_factor: 1
+
+system:
+  # M2 MacBook specific settings
+  device: "mps"             # Use Metal Performance Shaders
+  seed: 1234
+  
+  # Memory management
+  max_memory_gb: 12         # Reserve 4GB for system
+  thermal_threshold: 80     # Celsius
+  
+  # Monitoring
+  log_every: 50
+  wandb_project: "m2-tts-poc"
+  tensorboard_dir: "outputs/tensorboard"
+
+paths:
+  data_dir: "data"
+  output_dir: "outputs/stage1"
+  checkpoint_dir: "outputs/stage1/checkpoints"
+  log_dir: "outputs/stage1/logs"
