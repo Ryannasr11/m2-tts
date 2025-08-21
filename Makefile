@@ -29,9 +29,15 @@ help:
 	@echo "  format          Format code with black and isort"
 	@echo ""
 	@echo "Training:"
-	@echo "  train           Start training with default config"
+	@echo "  train           Start Stage 1 training (POC)"
 	@echo "  train-poc       Start POC training (minimal)"
-	@echo "  resume          Resume training from latest checkpoint"
+	@echo "  train-stage2    Start Stage 2 training (quality improvement)"
+	@echo "  resume          Resume Stage 1 training from latest checkpoint"
+	@echo "  resume-stage2   Resume Stage 2 training from latest checkpoint"
+	@echo ""
+	@echo "Data:"
+	@echo "  download-data   Download LJSpeech subset (1000 samples)"
+	@echo "  download-full   Download full LJSpeech dataset"
 	@echo ""
 	@echo "Inference:"
 	@echo "  synthesize      Generate sample audio"
@@ -74,12 +80,21 @@ format:
 	isort $(SRC_DIR) $(SCRIPTS_DIR) $(TRAINING_DIR) --profile=black
 
 # Training targets  
-.PHONY: train train-poc resume
+.PHONY: train train-poc train-stage2 resume resume-stage2 download-data
 train:
 	$(PYTHON) $(TRAINING_DIR)/train.py --config $(CONFIG_DIR)/stage1_poc.yaml
 
 train-poc:
 	$(PYTHON) $(TRAINING_DIR)/train.py --config $(CONFIG_DIR)/stage1_poc.yaml
+
+train-stage2:
+	$(PYTHON) $(TRAINING_DIR)/train_stage2.py --config $(CONFIG_DIR)/stage2_quality.yaml
+
+download-data:
+	$(PYTHON) $(SCRIPTS_DIR)/download_data.py --dataset ljspeech --subset 1000
+
+download-full:
+	$(PYTHON) $(SCRIPTS_DIR)/download_data.py --dataset ljspeech
 
 resume:
 	@LATEST=$$(ls -t $(OUTPUT_DIR)/stage1/checkpoints/checkpoint_step_*.pt 2>/dev/null | head -1); \
@@ -89,6 +104,16 @@ resume:
 	else \
 		echo "No checkpoints found, starting fresh training"; \
 		$(MAKE) train; \
+	fi
+
+resume-stage2:
+	@LATEST=$$(ls -t $(OUTPUT_DIR)/stage2/checkpoints/checkpoint_step_*.pt 2>/dev/null | head -1); \
+	if [ -n "$$LATEST" ]; then \
+		echo "Resuming Stage 2 from: $$LATEST"; \
+		$(PYTHON) $(TRAINING_DIR)/train_stage2.py --config $(CONFIG_DIR)/stage2_quality.yaml --resume "$$LATEST"; \
+	else \
+		echo "No Stage 2 checkpoints found, starting fresh training"; \
+		$(MAKE) train-stage2; \
 	fi
 
 # Inference targets

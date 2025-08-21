@@ -1,0 +1,125 @@
+# Stage 2 Quality Configuration - Improved model for real data training
+# Target: Quality improvement with full LJSpeech dataset
+
+model:
+  # Scaled architecture for better quality
+  text_encoder:
+    vocab_size: 256
+    hidden_dim: 96          # Increased from 64
+    num_layers: 3           # Increased from 2
+    num_heads: 2
+    dropout: 0.1
+    
+  duration_predictor:
+    hidden_dim: 96          # Match encoder
+    kernel_size: 3
+    dropout: 0.1
+    
+  decoder:
+    hidden_dim: 96          # Match encoder
+    latent_dim: 96
+    mel_channels: 80        # Increased from 64
+    num_layers: 3           # Increased from 2
+    
+  vocoder:
+    mel_channels: 80        # Match decoder
+    hidden_channels: 256    # Increased from 128
+    kernel_size: 3
+    n_layers: 6             # Increased depth
+
+training:
+  # Improved training settings for real data
+  batch_size: 4             # Slightly larger than POC
+  gradient_accumulation_steps: 8  # Effective batch size = 32
+  max_steps: 50000          # Longer training
+  learning_rate: 8e-5       # Slightly reduced for stability
+  weight_decay: 1e-6
+  
+  # Optimization settings
+  mixed_precision: true
+  gradient_checkpointing: true
+  gradient_clip_norm: 1.0   # Tighter clipping
+  
+  # Scheduling
+  warmup_steps: 2000
+  lr_scheduler: "cosine"
+  
+  # Improved loss weights
+  mel_loss_weight: 1.0
+  duration_loss_weight: 0.1
+  adversarial_loss_weight: 0.25  # New
+  feature_matching_weight: 2.0   # New
+  
+  # Validation and checkpointing
+  save_every: 2000
+  validate_every: 1000
+  max_checkpoints: 10       # Keep more checkpoints
+  
+  # Early stopping
+  patience: 10000           # Steps without improvement
+  min_delta: 0.001          # Minimum loss improvement
+
+data:
+  # Use full LJSpeech dataset
+  dataset_name: "ljspeech"
+  data_dir: "data/ljspeech"
+  subset_size: null         # Use full dataset
+  
+  # Improved audio preprocessing
+  sample_rate: 22050
+  n_fft: 1024
+  hop_length: 256
+  win_length: 1024
+  n_mels: 80                # Increased resolution
+  fmin: 0
+  fmax: 11025
+  
+  # Text preprocessing
+  text_cleaners: ["english_cleaners"]
+  phoneme_dict: "configs/phoneme_dict.txt"
+  
+  # Data loading optimizations
+  num_workers: 4            # Increased for real data
+  pin_memory: false
+  prefetch_factor: 2
+  
+  # Data augmentation (optional)
+  use_audio_augmentation: false
+  use_text_augmentation: false
+
+system:
+  # M2 MacBook specific settings
+  device: "mps"
+  seed: 1234
+  
+  # Memory management for longer training
+  max_memory_gb: 14         # Use more memory
+  thermal_threshold: 75     # Slightly lower threshold
+  
+  # Enhanced monitoring
+  log_every: 100
+  wandb_project: "m2-tts-stage2"
+  tensorboard_dir: "outputs/stage2/tensorboard"
+  
+  # Quality evaluation
+  generate_samples_every: 5000
+  eval_texts: [
+    "Hello world, this is a test of the improved model.",
+    "The quick brown fox jumps over the lazy dog.",
+    "M2 TTS generates high quality speech synthesis.",
+    "This model runs efficiently on Apple Silicon hardware."
+  ]
+
+paths:
+  data_dir: "data"
+  output_dir: "outputs/stage2"
+  checkpoint_dir: "outputs/stage2/checkpoints"
+  log_dir: "outputs/stage2/logs"
+  samples_dir: "outputs/stage2/samples"
+
+# Model size targets
+targets:
+  total_params: "1M-5M"     # Target parameter range
+  model_size_mb: "5-15"     # Target file size
+  inference_rtf: "< 0.5"    # Real-time factor target
+  mos_score: "> 3.5"        # Mean opinion score target
